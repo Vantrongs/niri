@@ -16,6 +16,7 @@ use super::{
     ConfigureIntent, InteractiveResizeData, LayoutElement, Options, RemovedTile, SizeFrac,
 };
 use crate::animation::{Animation, Clock};
+use crate::layout::RenderLayer;
 use crate::niri_render_elements;
 use crate::render_helpers::renderer::NiriRenderer;
 use crate::render_helpers::xray::XrayPos;
@@ -1057,6 +1058,7 @@ impl<W: LayoutElement> FloatingSpace<W> {
         xray_pos: XrayPos,
         view_rect: Rectangle<f64, Logical>,
         focus_ring: bool,
+        layer: RenderLayer,
         push: &mut dyn FnMut(FloatingSpaceRenderElement<R>),
     ) {
         let scale = Scale::from(self.scale);
@@ -1071,6 +1073,11 @@ impl<W: LayoutElement> FloatingSpace<W> {
 
         let active = self.active_window_id.clone();
         for (tile, tile_pos) in self.tiles_with_render_positions() {
+            // Skip tiles belonging to a different render layer.
+            if layer.is_normal() == tile.is_moving_between_workspaces() {
+                continue;
+            }
+
             // For the active tile, draw the focus ring.
             let focus_ring = focus_ring && Some(tile.window().id()) == active.as_ref();
 
